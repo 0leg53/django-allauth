@@ -48,6 +48,14 @@ class AppleOAuth2Client(OAuth2Client):
         ).decode('utf-8')
         return client_secret
 
+    @classmethod
+    def is_json_response(cls, response):
+        return (
+            response.headers['content-type'].split(
+                ';')[0] == 'application/json'
+            or response.text[:2] == '{"'
+        )
+
     def get_access_token(self, code):
         url = self.access_token_url
         client_secret = self.generate_client_secret()
