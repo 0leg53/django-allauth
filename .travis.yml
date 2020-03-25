@@ -36,11 +36,6 @@ matrix:
     - python: 3.8
       env: TOXENV=py38-djangomaster
 
-cache:
-  directories:
-    - $HOME/.cache/pip
-    - $TRAVIS_BUILD_DIR/.tox
-
 install:
   - if [[ $TOXENV == "standardjs" ]]; then nvm install 8; fi
   - pip install --upgrade pip wheel setuptools
