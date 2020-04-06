@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from urllib.parse import parse_qs
+import json
 
 from django.contrib.auth import authenticate
 from django.contrib.sites.models import Site
@@ -9,18 +9,16 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_str
-from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 
 import allauth.app_settings
 from allauth.account.models import EmailAddress
 from allauth.account.utils import get_next_redirect_url, setup_user_email
 from allauth.utils import get_user_model
-
-from ..utils import get_request_param
 from . import app_settings, providers
 from .adapter import get_adapter
 from .fields import JSONField
+from ..utils import get_request_param
 
 
 class SocialAppManager(models.Manager):
@@ -311,7 +309,7 @@ class SocialLogin(object):
     @classmethod
     def stash_urlencoded_state(cls, request):
         state = cls.state_from_request(request)
-        return urlencode(state)
+        return json.dumps(state)
 
     @classmethod
     def unstash_state(cls, request):
@@ -322,7 +320,7 @@ class SocialLogin(object):
 
     @classmethod
     def unstash_urlencoded_state(cls, state):
-        return parse_qs(state)
+        return json.loads(state)
 
     @classmethod
     def verify_and_unstash_state(cls, request, verifier):
