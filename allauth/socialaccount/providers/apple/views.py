@@ -24,6 +24,7 @@ from .provider import AppleProvider
 
 
 class AppleOAuth2Adapter(OAuth2Adapter):
+    client_cls = AppleOAuth2Client
     provider_id = AppleProvider.id
     access_token_url = "https://appleid.apple.com/auth/token"
     authorize_url = "https://appleid.apple.com/auth/authorize"
@@ -124,54 +125,5 @@ class AppleOAuth2Adapter(OAuth2Adapter):
         }
 
 
-class AppleOAuth2ClientMixin:
-    client_cls = AppleOAuth2Client
-
-
-class AppleOAuth2LoginView(AppleOAuth2ClientMixin, OAuth2LoginView):
-    """
-    Custom AppleOAuth2LoginView to return AppleOAuth2Client
-    """
-
-    pass
-
-
-class AppleOAuth2CallbackView(AppleOAuth2ClientMixin, OAuth2CallbackView):
-    """
-    Custom OAuth2CallbackView because `Sign In With Apple`:
-        * returns AppleOAuth2Client
-        * Apple requests callback by POST
-    """
-
-    def get_user_scope_data(self):
-        user_scope_data = get_request_param(self.request, "user")
-        try:
-            return json.loads(user_scope_data)
-        except json.JSONDecodeError:
-            # We do not care much about user scope data as it maybe blank
-            # so return blank dictionary instead
-            return {}
-
-    def get_identity_data(self):
-        id_token = get_request_param(self.request, "id_token")
-        identity_data = self.adapter.get_verified_identity_data(id_token=id_token)
-        identity_data["user_scope_data"] = self.get_user_scope_data()
-        return identity_data
-
-    def get_token_data(self, app):
-        # Parse id_token and other form_post response data
-        identity_data = self.get_identity_data()
-
-        # Exchange `code`
-        client = self.get_client(self.request, app)
-        code = get_request_param(self.request, "code")
-        access_token_data = client.get_access_token(code)
-
-        return {
-            "identity_data": identity_data,
-            "access_token_data": access_token_data
-        }
-
-
-oauth2_login = AppleOAuth2LoginView.adapter_view(AppleOAuth2Adapter)
-oauth2_callback = csrf_exempt(AppleOAuth2CallbackView.adapter_view(AppleOAuth2Adapter))
+oauth2_login = OAuth2LoginView.adapter_view(AppleOAuth2Adapter)
+oauth2_callback = csrf_exempt(OAuth2CallbackView.adapter_view(AppleOAuth2Adapter))
