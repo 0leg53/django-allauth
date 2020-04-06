@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from urllib.parse import parse_qs
+
 from django.contrib.auth import authenticate
 from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
@@ -7,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_str
+from django.utils.http import urlencode
 from django.utils.translation import gettext_lazy as _
 
 import allauth.app_settings
@@ -306,11 +309,20 @@ class SocialLogin(object):
         return verifier
 
     @classmethod
+    def stash_urlencoded_state(cls, request):
+        state = cls.state_from_request(request)
+        return urlencode(state)
+
+    @classmethod
     def unstash_state(cls, request):
         if 'socialaccount_state' not in request.session:
             raise PermissionDenied()
         state, verifier = request.session.pop('socialaccount_state')
         return state
+
+    @classmethod
+    def unstash_urlencoded_state(cls, state):
+        return parse_qs(state)
 
     @classmethod
     def verify_and_unstash_state(cls, request, verifier):
