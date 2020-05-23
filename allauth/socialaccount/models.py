@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import json
+
 from django.contrib.auth import authenticate
 from django.contrib.sites.models import Site
 from django.contrib.sites.shortcuts import get_current_site
@@ -13,11 +15,10 @@ import allauth.app_settings
 from allauth.account.models import EmailAddress
 from allauth.account.utils import get_next_redirect_url, setup_user_email
 from allauth.utils import get_user_model
-
-from ..utils import get_request_param
 from . import app_settings, providers
 from .adapter import get_adapter
 from .fields import JSONField
+from ..utils import get_request_param
 
 
 class SocialAppManager(models.Manager):
@@ -306,11 +307,20 @@ class SocialLogin(object):
         return verifier
 
     @classmethod
+    def stash_urlencoded_state(cls, request):
+        state = cls.state_from_request(request)
+        return json.dumps(state)
+
+    @classmethod
     def unstash_state(cls, request):
         if 'socialaccount_state' not in request.session:
             raise PermissionDenied()
         state, verifier = request.session.pop('socialaccount_state')
         return state
+
+    @classmethod
+    def unstash_urlencoded_state(cls, state):
+        return json.loads(state)
 
     @classmethod
     def verify_and_unstash_state(cls, request, verifier):

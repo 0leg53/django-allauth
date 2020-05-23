@@ -26,6 +26,7 @@ class OAuth2Adapter(object):
     client_cls = OAuth2Client
     expires_in_key = "expires_in"
     supports_state = True
+    support_session_state = True
     redirect_uri_protocol = None
     access_token_method = "POST"
     login_cancelled_error = "access_denied"
@@ -62,6 +63,21 @@ class OAuth2Adapter(object):
         code = get_request_param(self.request, "code")
         return client.get_access_token(code)
 
+    def stash_state(self):
+        if self.support_session_state:
+            return SocialLogin.stash_state(self.request)
+        else:
+            return SocialLogin.stash_urlencoded_state(self.request)
+
+    def unstash_state(self):
+        state = get_request_param(self.request, "state")
+        if self.support_session_state:
+            if self.supports_state:
+                return SocialLogin.verify_and_unstash_state(self.request, state)
+            else:
+                return SocialLogin.unstash_state(self.request)
+        else:
+            return SocialLogin.unstash_urlencoded_state(state)
 
 
 class OAuth2View(object):
@@ -108,7 +124,7 @@ class OAuth2LoginView(OAuth2View):
         action = request.GET.get('action', AuthAction.AUTHENTICATE)
         auth_url = self.adapter.authorize_url
         auth_params = provider.get_auth_params(request, action)
-        client.state = SocialLogin.stash_state(request)
+        client.state = self.adapter.stash_state()
         try:
             return HttpResponseRedirect(client.get_redirect_url(
                 auth_url, auth_params))
@@ -150,12 +166,7 @@ class OAuth2CallbackView(OAuth2View):
             )
             login.token = token
 
-            state = get_request_param(request, "state")
-
-            if self.adapter.supports_state:
-                login.state = SocialLogin.verify_and_unstash_state(request, state)
-            else:
-                login.state = SocialLogin.unstash_state(request)
+            login.state = self.adapter.unstash_state()
 
             return complete_social_login(request, login)
 

@@ -27,6 +27,7 @@ from .provider import AppleProvider
 class AppleOAuth2Adapter(OAuth2Adapter):
     client_cls = AppleOAuth2Client
     provider_id = AppleProvider.id
+    support_session_state = False
     access_token_url = "https://appleid.apple.com/auth/token"
     authorize_url = "https://appleid.apple.com/auth/authorize"
     public_key_url = "https://appleid.apple.com/auth/keys"
