@@ -27,11 +27,17 @@ class AppleProvider(OAuth2Provider):
 
     def extract_email_addresses(self, data):
         ret = []
-        email = data.get('email')
-        verified = data.get('email_verified')
-        if not isinstance(verified, bool):
-            verified = verified.lower() == 'true'
+
+        # When we use response_mode=form_get we will not get an `email` or
+        # `email_verified` back from Apple.
+        email = data.get("email")
+
         if email:
+            verified = data.get("email_verified", "")
+
+            if not isinstance(verified, bool):
+                verified = verified.lower() == 'true'
+
             ret.append(
                 EmailAddress(
                     email=email,
@@ -39,6 +45,7 @@ class AppleProvider(OAuth2Provider):
                     primary=True,
                 )
             )
+
         return ret
 
     def get_default_scope(self):
