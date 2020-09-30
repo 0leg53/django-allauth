@@ -38,13 +38,6 @@ class AppleOAuth2Client(OAuth2Client):
         ).decode('utf-8')
         return client_secret
 
-    @classmethod
-    def is_json_response(cls, response):
-        return (
-            response.headers['content-type'].split(
-                ';')[0] == 'application/json'
-            or response.text[:2] == '{"'
-        )
     def get_client_id(self):
         """ We support multiple client_ids, but use the first one for api calls """
         return self.consumer_key.split(',')[0]

@@ -18,6 +18,7 @@ Note worthy changes
 Note worthy changes
 -------------------
 
+
 - New providers: EDX, Yandex, Mixer.
 
 - Fixed Twitch ``get_avatar_url()`` method to use the profile picture retrieved
@@ -27,7 +28,6 @@ Note worthy changes
 
 
 0.41.0 (2019-12-18)
-*******************
 
 Security notice
 ---------------
